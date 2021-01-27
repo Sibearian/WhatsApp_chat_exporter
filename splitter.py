@@ -1,62 +1,49 @@
-from re import search 
+from re import search, finditer
 
-# Search the entier text file to find the lines which <start from mm/dd/yy, hh:mm - >
-def messg_starting_point(lines):
+class splitter:
 
-    messg_start_point = list()
-
-    i = 0
-    
-    for line in lines:
-        
-        if re.search(r'^(\d){1,2}\/(\d){1,2}\/(\d){1,2}\,\s(\d){1,2}\:(\d){1,2}\s\-\s', line):
-            messg_start_point.append(i)
-        i += 1
-
-    return messg_start_point
-
-
-# Checks if the message is from system or not.
-def is_sys_msg(line):
-    if not re.search(r'^(\d){1,2}\/(\d){1,2}\/(\d){1,2}\,\s(\d){1,2}\:(\d){1,2}\s\-\s', line):
-        return True
-    else:
-        return False
-
-
-# Return the username of the message sender.
-def get_user_name(line):
-    _split_at_semicolon = line.split(':')
-    username = _split_at_semicolon[1]
-    return username[5:]
-
-# Get a block of content, this includes the message, username, and time.
-def messg_block(lines):
-    
-    msg_block = list()
-    string = ''
-
-    for i in range(len(lines)):
-        string += lines[i]
-        try:
-            if re.search(r'^(\d){1,2}\/(\d){1,2}\/(\d){1,2}\,\s(\d){1,2}\:(\d){1,2}\s\-\s', lines[i + 1]):
-                msg_block.append(string)
+    # Outputs a list of blocks of strings that contain meta data and the message
+    def getMessageBlock(lines):
+        file = open('test.txt', 'w')
+        messageBlock = list()
+        string = ''
+        for i in range(len(lines)):
+            string += lines[i]
+            try:
+                if search(r'^(\d){1,2}\/(\d){1,2}\/(\d){1,2}\,\s(\d){1,2}\:(\d){1,2}\s\-\s', lines[i + 1]):
+                    file.write(string)
+                    messageBlock.append(string)
+                    string = ''
+            except Exception:
+                file.write(string)
+                messageBlock.append(string)
                 string = ''
-        except Exception:
-            msg_block.append(string)
-            string = ''
-        
-    return msg_block
-
-
-# Get the content of the user message.
-def get_messg(msg_block):
-
-    print(msg_block)
-
-    _split_at_semicolon = msg_block.split(':')
-    string = _split_at_semicolon[2:]
+        return messageBlock
     
+    # Checks if it is sent by system or not
+    def isSysMessage(messageBlock):
+        line = messageBlock.splitlines()[0]
+        if not search(r'^(\d){1,2}\/(\d){1,2}\/(\d){1,2}\,\s(\d){1,2}\:(\d){1,2}\s\-\s(\w)*\:', line):
+            return True
+        else:
+            return False
     
-    print(string)
-    return string
+    # Get the username of the sender, "_" means "you"
+    def getusername(messageBlock):
+        line = messageBlock.splitlines()[0]
+        _splitAtSemicolon = line.split(':')
+        _splitAtSpace = _splitAtSemicolon[1]
+        userName = _splitAtSpace[5:]
+        return str(userName)
+    
+    # Get the message part of the user message
+    def getMessage(messageBlock):
+        _splitAtSemicolon = messageBlock.split(':')
+        message = _splitAtSemicolon[2:]
+        return str(message)
+
+    # Get the message part of the system message
+    def getSysMessage(messageBlock):
+        _splitAtSpace = messageBlock.split(' ')
+        message = _splitAtSpace[3:]
+        return ' '.join(message)
